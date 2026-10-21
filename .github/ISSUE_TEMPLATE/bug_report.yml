@@ -1,0 +1,47 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please remove tokens, private paths and conversation content from logs and screenshots.
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: OpenChamber, OpenCode and extension version
+      placeholder: OpenChamber 2.5.0, OpenCode 2.1.1, extension 0.1.14
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: OpenChamber surface
+      options: [Desktop, Web, VS Code, Mobile]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: collector.log, OpenChamber output, browser console
+      render: text

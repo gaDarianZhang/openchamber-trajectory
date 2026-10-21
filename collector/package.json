@@ -1,5 +1,5 @@
 {
-  "name": "@openchamber/opencode-trajectory-collector",
+  "name": "openchamber-trajectory-collector",
   "version": "0.1.0",
   "description": "Read-only OpenCode 2 trajectory collector for the OpenChamber Trajectory extension",
   "type": "module",
@@ -11,7 +11,8 @@
   "files": [
     "index.js",
     "ledger.js",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "keywords": [
     "opencode",
@@ -20,6 +21,16 @@
     "openchamber"
   ],
   "license": "MIT",
+  "author": "gaDarianZhang",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gaDarianZhang/openchamber-trajectory.git",
+    "directory": "collector"
+  },
+  "homepage": "https://github.com/gaDarianZhang/openchamber-trajectory/tree/main/collector",
+  "bugs": {
+    "url": "https://github.com/gaDarianZhang/openchamber-trajectory/issues"
+  },
   "engines": {
     "node": ">=22"
   }

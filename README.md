@@ -1,88 +1,101 @@
 # OpenChamber Trajectory
 
-A Trajectory panel for OpenChamber, modelled on the DeepSeek Harness trajectory
-view. It has two parts:
+[![CI](https://github.com/gaDarianZhang/openchamber-trajectory/actions/workflows/ci.yml/badge.svg)](https://github.com/gaDarianZhang/openchamber-trajectory/actions/workflows/ci.yml)
+
+A Trajectory panel for [OpenChamber](https://openchamber.dev), modelled on the
+DeepSeek Harness trajectory view. It shows what the agent did, step by step:
+messages, tools, timing, tokens, compaction and errors, with a live timing
+overview and a per-record inspector.
+
+The project has two parts:
 
 - **OpenCode collector** (`collector/`) — a read-only OpenCode 2 plugin that
-  captures request headers, steps, tools, retries, compaction and usage, and
+  captures request headers, steps, tools, retries, compaction and usage, then
   serves a small JSON ledger over loopback.
-- **OpenChamber extension** (`extension/`) — a sandboxed panel, plus a small
-  service that discovers the collector and proxies its data.
+- **OpenChamber extension** (repository root) — a sandboxed panel plus a small
+  host service that discovers the collector and proxies its data.
 
 The extension never receives an OpenCode password and never talks to the
 OpenCode API. The collector never mutates a session, never sends a prompt, and
-never writes into the project.
+never writes into your project.
 
-## What it shows
+## Features
 
-- Turns and steps, with request numbers
-- TTFT, decode time, total duration, throughput
-- Input / output / reasoning / cache read / cache write tokens and cost
+- Turns, steps and request numbers
+- TTFT, decode time, total duration and throughput
+- Input / output / reasoning / cache-read / cache-write tokens and cost
 - Tool calls with arguments, results, errors and exact timing
 - Compaction, retries, failures, system/synthetic/skill notices
-- Request context: system prompt, tool schemas, options, model, agent
-- Live updates while the session is running
-- A timing overview strip with wheel zoom (1×–128×), drag-to-pan, +/- controls and reset
+- Request context: system prompt, tool schemas, options, model and agent
+- Live updates while a session is running
+- Timing overview with wheel zoom (1×–128×), drag-to-pan, +/− controls and reset
 - Click an overview bar to select the record and scroll the ledger to it
-  (expanding its turn and clearing a search filter first)
+- Inspector with Summary, Input, Output, Timing, Usage, Request and Raw tabs
+- Search, follow-tail and load-earlier
 
-## Current shape
+## Requirements
 
-- **Panel only.** The extension installs a rail panel, plus a session action.
-  The `page` entry is intentionally not shipped yet: OpenChamber 2.5.0's
-  full-page guest surface did not reliably mount this guest in testing.
-- **Local only.** The collector's loopback server must be reachable from the
-  OpenChamber service. OpenCode and the OpenChamber server should run on the
-  same machine (or the same container network).
-- **New sessions only for request headers.** Historical sessions are rebuilt
-  through `ctx.session.context()`, so their timing/tokens/tools are available,
-  but system prompt and tool schemas exist only for requests made while the
-  collector was loaded.
-- **Web and Desktop.** Extensions are not loaded in VS Code or the mobile app.
+- OpenChamber **2.5.0 or newer** on web or desktop
+- OpenCode **2.x**
+- The collector and OpenChamber must run on the same machine (or the same
+  container network), because the service reaches the collector over loopback
 
-## Install (development)
+Extensions do not load in VS Code or the mobile app.
 
-1. Install the OpenCode collector. For a local checkout, add it to the
-   project's `.opencode/plugins/` or to the `plugins` array in
-   `opencode.json(c)`:
+## Install
 
-   ```bash
-   ln -s /absolute/path/to/openchamber-trajectory/collector \
-     .opencode/plugins/trajectory-collector
-   ```
+### 1. Collector (OpenCode plugin)
 
-   For a published package:
-
-   ```bash
-   opencode plugin add @openchamber/opencode-trajectory-collector
-   ```
-
-2. Install the OpenChamber extension: Settings → Extensions → paste the
-   absolute path to `extension/` (or a zip of it).
-
-3. The extension asks for the `service` capability. Approve it.
-
-4. Open a chat, then click the Trajectory icon on the right rail (or use the
-   session's “Open trajectory” action).
-
-## Build
+Clone the repository and link the collector into the project where you use
+OpenCode:
 
 ```bash
-bun install
-bun run build       # bundles extension/panel/main.js
-bun run test        # collector ledger tests
-bun run check       # build + syntax checks
+git clone https://github.com/gaDarianZhang/openchamber-trajectory.git
+mkdir -p .opencode/plugins
+ln -s "$PWD/openchamber-trajectory/collector" \
+  .opencode/plugins/trajectory-collector
 ```
 
-`extension/panel/main.js` is the built guest bundle and must be committed or
-shipped with the extension.
+Or add `./openchamber-trajectory/collector` to the `plugins` array in
+`opencode.json(c)`.
 
-## Data flow
+Once the npm package is published, this is shorter:
 
+```bash
+opencode plugin add openchamber-trajectory-collector
 ```
+
+### 2. Extension (OpenChamber)
+
+Settings → Extensions → add:
+
+```text
+https://github.com/gaDarianZhang/openchamber-trajectory
+```
+
+You can also download the extension zip from
+[Releases](https://github.com/gaDarianZhang/openchamber-trajectory/releases)
+and add the zip file.
+
+Approve the `service` capability when prompted. Then open a chat and click the
+Trajectory icon on the right rail, or use the session action **Open trajectory**.
+
+### 3. Verify
+
+The panel header shows **LIVE** when the collector is connected. If it shows
+“Collector not running”, check:
+
+```bash
+opencode plugin list
+ls ~/.local/share/openchamber/trajectory/instances
+```
+
+## How it works
+
+```text
 OpenCode 2
   collector/index.js
-    ctx.session.hook("context")  -> request headers
+    ctx.session.hook("context")  -> system prompt, tools, options, model, agent
     ctx.session.hook("retry")    -> retry facts
     ctx.tool.hook("execute.*")   -> tool args/results/timing
     ctx.event.subscribe()        -> live step/text/tool/compaction events
@@ -91,45 +104,78 @@ OpenCode 2
             |
             v
 OpenChamber host
-  extension/service/main.js
+  service/main.js
     discovers the collector, proxies /ledger /row /header
             |
             v
-extension/panel/main.js (sandboxed iframe)
+panel/main.js (sandboxed iframe)
   timeline + ledger + inspector
 ```
 
-## Data directory
+The collector keeps request headers in memory and rebuilds durable transcripts
+with `ctx.session.context()`. Historical timing, tokens and tools are
+recoverable; system prompts and tool schemas exist only for requests made while
+the collector was loaded.
 
-Default: `~/.local/share/openchamber/trajectory`
+## Privacy and security
 
-- `instances/<pid>-<random>.json` — discovery record (`0600`)
-- `collector.log` — collector errors only (`0600`)
+- The collector binds `127.0.0.1` on a random port with a random bearer token.
+- The discovery file is written with mode `0600` under
+  `~/.local/share/openchamber/trajectory/instances`.
+- The panel never sees the collector port or token; only the host service does.
+- No telemetry, no external requests, no prompt content written to the project.
+- `collector.log` contains errors only, not prompt or tool content.
+- The collector has the same local access as the OpenCode process. Review the
+  source before installing, as with any plugin.
 
+Data directory: `~/.local/share/openchamber/trajectory`  
 Override with `OPENCHAMBER_TRAJECTORY_DATA_DIR`.
 
-## Development notes
+## Development
 
-- `collector/ledger.js` is a pure projection from durable messages and live
-  events. It has no OpenCode imports and is covered by
-  `collector/ledger.test.js`.
-- `collector/index.js` is the OpenCode plugin entry. It opens one loopback
-  server per loaded OpenCode location.
-- `extension/src/` is the React source for the panel. `extension/panel/main.js`
-  is built by `scripts/build.mjs` as an IIFE.
-- The collector is loaded by OpenCode; after editing it, OpenCode hot-reloads
-  the plugin and the panel reconnects automatically. After editing the panel,
-  rebuild and reopen the panel (or bump the extension version and reinstall).
-- OpenChamber caches guest bundles by extension version. When testing panel
-  changes, bump `extension/package.json` `version` and reinstall, or restart
-  OpenChamber.
+```bash
+bun install
+bun run build       # bundles panel/main.js
+bun run test        # collector ledger tests
+bun run check       # build + syntax checks + tests
+bun run package     # creates dist/ release artifacts
+```
+
+`panel/main.js` is the built guest bundle and must be committed or shipped with
+the extension. OpenChamber caches guest bundles by extension version; bump
+`package.json` `version` and reinstall after panel changes.
+
+Key files:
+
+- `collector/ledger.js` — pure projection from durable messages and live events
+- `collector/index.js` — OpenCode plugin entry and loopback server
+- `src/` — React panel source
+- `service/main.js` — OpenChamber host service
+- `panel/` — built panel assets
+
+## Release
+
+Tags of the form `v*` build and attach:
+
+- `openchamber-trajectory-extension-<version>.zip`
+- `openchamber-trajectory-collector-<version>.tgz`
+
+The release workflow can publish the collector to npm when the repository has
+an `NPM_TOKEN` secret.
 
 ## Known limitations
 
-- No Chat tab. OpenChamber's extension SDK only provides panel/page surfaces.
-- No inline subagent tree yet; `task` tool calls link to the child session only
-  as a metadata row.
-- Request headers before the collector was installed are not recoverable.
-- The collector is a public-API plugin; OpenCode plugin API changes may require
-  an update.
-- Page surface is deferred (see “Current shape”).
+- **Panel only.** OpenChamber 2.5.0's full-page guest surface did not reliably
+  mount this guest in testing, so the `page` entry is not shipped yet.
+- **Local only.** Remote/external OpenCode servers need a different transport.
+- **No inline subagent tree.** `task` tool calls are shown as tool rows.
+- **Request headers are not historical.** They start at collector install time.
+- **No Chat tab.** OpenChamber extensions cannot register a conversation view.
+- **OpenCode plugin API changes** may require a collector update.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+This is an independent project and is not affiliated with OpenChamber, OpenCode
+or DeepSeek.

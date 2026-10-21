@@ -1,14 +1,31 @@
 {
   "name": "openchamber-trajectory",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.1.14",
+  "description": "Trajectory panel for OpenChamber, powered by an OpenCode collector plugin",
   "type": "module",
-  "description": "Trajectory view for OpenChamber: OpenCode collector + OpenChamber extension",
+  "license": "MIT",
+  "author": "gaDarianZhang",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gaDarianZhang/openchamber-trajectory.git"
+  },
+  "homepage": "https://github.com/gaDarianZhang/openchamber-trajectory",
+  "bugs": {
+    "url": "https://github.com/gaDarianZhang/openchamber-trajectory/issues"
+  },
+  "keywords": [
+    "openchamber",
+    "opencode",
+    "trajectory",
+    "opencode-plugin",
+    "openchamber-extension"
+  ],
   "scripts": {
     "build": "bun run scripts/build.mjs",
     "dev": "bun run scripts/build.mjs --watch",
     "test": "node --test collector/ledger.test.js",
-    "check": "bun run scripts/build.mjs && node --check collector/index.js && node --check collector/ledger.js && node --check extension/service/main.js && node --test collector/ledger.test.js"
+    "check": "bun run scripts/build.mjs && node --check collector/index.js && node --check collector/ledger.js && node --check service/main.js && node --test collector/ledger.test.js",
+    "package": "node scripts/package-release.mjs"
   },
   "dependencies": {
     "@openchamber/sdk": "2.5.0",
@@ -20,5 +37,31 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "typescript": "5.9.3"
+  },
+  "openchamber": {
+    "apiVersion": 1,
+    "engines": {
+      "openchamber": ">=2.5.0"
+    },
+    "contributes": {
+      "panel": {
+        "id": "trajectory",
+        "name": "Trajectory",
+        "icon": "pulse",
+        "entry": "panel/index.html"
+      },
+      "service": {
+        "entry": "service/main.js",
+        "runtime": "host"
+      },
+      "actions": [
+        {
+          "id": "open-trajectory",
+          "label": "Open trajectory",
+          "where": "session",
+          "icon": "pulse"
+        }
+      ]
+    }
   }
 }

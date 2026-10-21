@@ -20,7 +20,7 @@ project and no content leaves the machine.
 ## Install
 
 ```bash
-opencode plugin add @openchamber/opencode-trajectory-collector
+opencode plugin add openchamber-trajectory-collector
 ```
 
 Or add the package/path to the `plugins` array in `opencode.json(c)`.

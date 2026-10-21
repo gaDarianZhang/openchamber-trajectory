@@ -2,8 +2,8 @@ import { watch } from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dir, "..");
-const entry = path.join(root, "extension/src/main.tsx");
-const outdir = path.join(root, "extension/panel");
+const entry = path.join(root, "src/main.tsx");
+const outdir = path.join(root, "panel");
 
 const build = async () => {
   const result = await Bun.build({

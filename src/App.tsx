@@ -175,7 +175,7 @@ const FailurePanel: React.FC<{
   onRetry: () => void;
   host: HostClient;
 }> = ({ failure, onRetry, host }) => {
-  const install = failure.install ?? "mkdir -p .opencode/plugins && ln -s /path/to/openchamber-trajectory/collector .opencode/plugins/trajectory-collector";
+  const install = failure.install ?? "git clone https://github.com/gaDarianZhang/openchamber-trajectory.git && mkdir -p .opencode/plugins && ln -s \"$PWD/openchamber-trajectory/collector\" .opencode/plugins/trajectory-collector";
   return (
     <div className="state-panel">
       <div className="state-icon">◎</div>

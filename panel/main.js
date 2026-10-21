@@ -12502,9 +12502,9 @@ Error generating stack: ` + x.message + `
     }
   });
 
-  // extension/src/main.tsx
-  var import_react5 = __toESM(require_react());
-  var import_client = __toESM(require_client());
+  // src/main.tsx
+  var import_react5 = __toESM(require_react(), 1);
+  var import_client = __toESM(require_client(), 1);
 
   // node_modules/@openchamber/sdk/dist/api-version.js
   var OPENCHAMBER_SDK_CHANNEL = "openchamber.sdk";
@@ -13879,8 +13879,8 @@ Error generating stack: ` + x.message + `
   // node_modules/@openchamber/sdk/dist/service-surface.js
   var SURFACE_CONTROLLERS = ["none", "agent", "user"];
   var CONTROLLERS = new Set(SURFACE_CONTROLLERS);
-  // extension/src/App.tsx
-  var import_react4 = __toESM(require_react());
+  // src/App.tsx
+  var import_react4 = __toESM(require_react(), 1);
 
   // node_modules/@openchamber/sdk/dist/ui/theme.js
   var TOKEN_VARS = [
@@ -14261,7 +14261,7 @@ ${tone("success")}${tone("warning")}${tone("error")}${tone("info")}
 ${GUEST_SCROLLBAR_CSS}
 ${UI_SIZE_CSS}
 ${GUEST_UI_LOOK_CSS}`;
-  // extension/src/api.ts
+  // src/api.ts
   var parse = (body) => {
     try {
       return JSON.parse(body);
@@ -14301,7 +14301,7 @@ ${GUEST_UI_LOOK_CSS}`;
     return body;
   };
 
-  // extension/src/format.ts
+  // src/format.ts
   var formatDuration = (value) => {
     if (value === null || value === undefined || !Number.isFinite(value) || value < 0)
       return "—";
@@ -14415,9 +14415,9 @@ ${GUEST_UI_LOOK_CSS}`;
     return truncate(compact, limit);
   };
 
-  // extension/src/components/Timeline.tsx
-  var import_react = __toESM(require_react());
-  var jsx_runtime = __toESM(require_jsx_runtime());
+  // src/components/Timeline.tsx
+  var import_react = __toESM(require_react(), 1);
+  var jsx_runtime = __toESM(require_jsx_runtime(), 1);
   var MAX_ZOOM = 128;
   var MIN_SPAN_RATIO = 1 / MAX_ZOOM;
   var ZOOM_IN = 0.8;
@@ -14725,9 +14725,9 @@ ${GUEST_UI_LOOK_CSS}`;
     });
   };
 
-  // extension/src/components/Ledger.tsx
-  var import_react2 = __toESM(require_react());
-  var jsx_runtime2 = __toESM(require_jsx_runtime());
+  // src/components/Ledger.tsx
+  var import_react2 = __toESM(require_react(), 1);
+  var jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
   var PAGE_ROWS = 220;
   var StatusBadge = ({ status }) => /* @__PURE__ */ jsx_runtime2.jsx("span", {
     className: `badge ${statusTone(status)}`,
@@ -15334,9 +15334,9 @@ ${GUEST_UI_LOOK_CSS}`;
     });
   };
 
-  // extension/src/components/Inspector.tsx
-  var import_react3 = __toESM(require_react());
-  var jsx_runtime3 = __toESM(require_jsx_runtime());
+  // src/components/Inspector.tsx
+  var import_react3 = __toESM(require_react(), 1);
+  var jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
   var tabsFor = (row) => {
     switch (row.kind) {
       case "assistant":
@@ -15960,8 +15960,8 @@ ${GUEST_UI_LOOK_CSS}`;
     });
   };
 
-  // extension/src/App.tsx
-  var jsx_runtime4 = __toESM(require_jsx_runtime());
+  // src/App.tsx
+  var jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
   var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   function useLedger(host, sessionId, directory) {
     const [snapshot, setSnapshot] = import_react4.default.useState(null);
@@ -16099,7 +16099,7 @@ ${GUEST_UI_LOOK_CSS}`;
     ]
   });
   var FailurePanel = ({ failure, onRetry, host }) => {
-    const install = failure.install ?? "mkdir -p .opencode/plugins && ln -s /path/to/openchamber-trajectory/collector .opencode/plugins/trajectory-collector";
+    const install = failure.install ?? 'git clone https://github.com/gaDarianZhang/openchamber-trajectory.git && mkdir -p .opencode/plugins && ln -s "$PWD/openchamber-trajectory/collector" .opencode/plugins/trajectory-collector';
     return /* @__PURE__ */ jsx_runtime4.jsxs("div", {
       className: "state-panel",
       children: [
@@ -16483,8 +16483,8 @@ ${GUEST_UI_LOOK_CSS}`;
     });
   };
 
-  // extension/src/main.tsx
-  var jsx_runtime5 = __toESM(require_jsx_runtime());
+  // src/main.tsx
+  var jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
   var container = document.getElementById("root");
 
   class AppErrorBoundary extends import_react5.default.Component {

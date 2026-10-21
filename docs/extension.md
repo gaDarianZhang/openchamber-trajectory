@@ -1,17 +1,24 @@
 # OpenChamber Trajectory extension
 
-This folder is the OpenChamber extension package. It contains:
+The repository root is the OpenChamber extension package. It contains:
 
+- `package.json` — the `openchamber` manifest
 - `panel/index.html`, `panel/main.js`, `panel/styles.css` — the sandboxed panel
 - `service/main.js` — the host-side service that discovers the OpenCode
-  trajectory collector and proxies its JSON API
+  collector and proxies its JSON API
 
-It requires the collector from `../collector/` to be loaded in OpenCode.
+It requires the collector from `collector/` to be loaded in OpenCode.
 
 ## Install
 
-Settings → Extensions → add the absolute path to this folder (or a zip/git
-URL containing it). Approve the `service` capability.
+Settings → Extensions → add the repository URL:
+
+```text
+https://github.com/gaDarianZhang/openchamber-trajectory
+```
+
+Or download the extension zip from Releases and add the zip file. Approve the
+`service` capability.
 
 ## Manifest
 
