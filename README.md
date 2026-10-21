@@ -23,6 +23,8 @@ never writes into the project.
 - Request context: system prompt, tool schemas, options, model, agent
 - Live updates while the session is running
 - A timing overview strip and a per-record inspector
+- Click an overview bar to select the record and scroll the ledger to it
+  (expanding its turn and clearing a search filter first)
 
 ## Current shape
 
