@@ -14418,6 +14418,11 @@ ${GUEST_UI_LOOK_CSS}`;
   // extension/src/components/Timeline.tsx
   var import_react = __toESM(require_react());
   var jsx_runtime = __toESM(require_jsx_runtime());
+  var MAX_ZOOM = 32;
+  var MIN_SPAN_RATIO = 1 / MAX_ZOOM;
+  var ZOOM_IN = 0.8;
+  var ZOOM_OUT = 1.25;
+  var clamp = (value, min, max) => Math.min(Math.max(value, min), max);
   var rowTone = (row) => {
     if (row.kind === "assistant")
       return `assistant ${statusTone(row.status)}`;
@@ -14459,7 +14464,124 @@ ${GUEST_UI_LOOK_CSS}`;
       const max = Math.max(...ends, ...starts);
       return { min, max, span: Math.max(1, max - min) };
     }, [rows]);
-    if (!domain) {
+    const [view, setView] = import_react.default.useState(null);
+    const rootRef = import_react.default.useRef(null);
+    const trackRef = import_react.default.useRef(null);
+    const dragRef = import_react.default.useRef(null);
+    const suppressClickRef = import_react.default.useRef(false);
+    const visibleView = import_react.default.useMemo(() => {
+      if (!domain)
+        return null;
+      if (!view)
+        return { start: domain.min, end: domain.max };
+      const minSpan = domain.span * MIN_SPAN_RATIO;
+      const span = clamp(view.end - view.start, minSpan, domain.span);
+      const start = clamp(view.start, domain.min, domain.max - span);
+      return { start, end: start + span };
+    }, [domain, view]);
+    const zoom = domain && visibleView ? domain.span / Math.max(1, visibleView.end - visibleView.start) : 1;
+    const zoomed = view !== null;
+    const setClampedView = import_react.default.useCallback((start, end) => {
+      if (!domain)
+        return;
+      const minSpan = domain.span * MIN_SPAN_RATIO;
+      const span = clamp(end - start, minSpan, domain.span);
+      const clampedStart = clamp(start, domain.min, domain.max - span);
+      if (span >= domain.span - 1) {
+        setView(null);
+        return;
+      }
+      setView({ start: clampedStart, end: clampedStart + span });
+    }, [domain]);
+    const zoomAt = import_react.default.useCallback((clientX, factor) => {
+      if (!domain || !visibleView || !trackRef.current)
+        return;
+      const rect = trackRef.current.getBoundingClientRect();
+      if (rect.width <= 0)
+        return;
+      const ratio = clamp((clientX - rect.left) / rect.width, 0, 1);
+      const anchor = visibleView.start + ratio * (visibleView.end - visibleView.start);
+      const nextSpan = clamp((visibleView.end - visibleView.start) * factor, domain.span * MIN_SPAN_RATIO, domain.span);
+      const start = anchor - ratio * nextSpan;
+      setClampedView(start, start + nextSpan);
+    }, [domain, visibleView, setClampedView]);
+    const zoomBy = import_react.default.useCallback((factor) => {
+      if (!visibleView)
+        return;
+      const center = (visibleView.start + visibleView.end) / 2;
+      const span = (visibleView.end - visibleView.start) * factor;
+      setClampedView(center - span / 2, center + span / 2);
+    }, [visibleView, setClampedView]);
+    const resetZoom = import_react.default.useCallback(() => setView(null), []);
+    import_react.default.useEffect(() => {
+      const element = rootRef.current;
+      if (!element || !domain)
+        return;
+      const handleWheel = (event) => {
+        if (Math.abs(event.deltaY) < 1)
+          return;
+        if (Math.abs(event.deltaX) > Math.abs(event.deltaY))
+          return;
+        event.preventDefault();
+        zoomAt(event.clientX, event.deltaY < 0 ? ZOOM_IN : ZOOM_OUT);
+      };
+      element.addEventListener("wheel", handleWheel, { passive: false });
+      return () => element.removeEventListener("wheel", handleWheel);
+    }, [domain, zoomAt]);
+    const handlePointerDown = (event) => {
+      if (event.button !== 0 || !visibleView)
+        return;
+      dragRef.current = {
+        pointerId: event.pointerId,
+        x: event.clientX,
+        start: visibleView.start,
+        end: visibleView.end,
+        moved: false,
+        captured: false
+      };
+    };
+    const handlePointerMove = (event) => {
+      const drag = dragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId)
+        return;
+      const dx = event.clientX - drag.x;
+      if (!drag.moved && Math.abs(dx) < 4)
+        return;
+      if (!drag.moved) {
+        drag.moved = true;
+        suppressClickRef.current = true;
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId);
+          drag.captured = true;
+        } catch {}
+      }
+      const rect = trackRef.current?.getBoundingClientRect();
+      if (!rect || rect.width <= 0)
+        return;
+      const span = drag.end - drag.start;
+      const start = drag.start - dx / rect.width * span;
+      setClampedView(start, start + span);
+    };
+    const endPointer = (event) => {
+      const drag = dragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId)
+        return;
+      dragRef.current = null;
+      if (drag.captured) {
+        try {
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        } catch {}
+      }
+      window.setTimeout(() => {
+        suppressClickRef.current = false;
+      }, 250);
+    };
+    const handleBarClick = (row) => {
+      if (suppressClickRef.current)
+        return;
+      onSelect(row);
+    };
+    if (!domain || !visibleView) {
       return /* @__PURE__ */ jsx_runtime.jsx("div", {
         className: "timeline empty",
         children: /* @__PURE__ */ jsx_runtime.jsx("span", {
@@ -14467,8 +14589,18 @@ ${GUEST_UI_LOOK_CSS}`;
         })
       });
     }
+    const visibleSpan = Math.max(1, visibleView.end - visibleView.start);
+    const visibleTurns = snapshot.turns.filter((turn) => {
+      const turnRows = rows.filter((row) => row.turn === turn.index);
+      return turnRows.some((row) => {
+        const start = row.time?.start ?? turn.start;
+        const end = row.time?.end ?? start;
+        return end >= visibleView.start && start <= visibleView.end;
+      });
+    }).length;
     return /* @__PURE__ */ jsx_runtime.jsxs("div", {
-      className: "timeline",
+      className: `timeline${zoomed ? " zoomed" : ""}`,
+      ref: rootRef,
       "aria-label": "Trajectory timing overview",
       children: [
         /* @__PURE__ */ jsx_runtime.jsxs("div", {
@@ -14480,21 +14612,72 @@ ${GUEST_UI_LOOK_CSS}`;
             /* @__PURE__ */ jsx_runtime.jsxs("span", {
               className: "timeline-domain",
               children: [
-                formatDuration(domain.span),
-                " across ",
+                formatDuration(visibleSpan),
+                " · ",
+                visibleTurns,
+                " of ",
                 snapshot.totalTurns,
                 " turn",
                 snapshot.totalTurns === 1 ? "" : "s"
+              ]
+            }),
+            /* @__PURE__ */ jsx_runtime.jsxs("span", {
+              className: "timeline-tools",
+              children: [
+                /* @__PURE__ */ jsx_runtime.jsxs("span", {
+                  className: "timeline-zoom",
+                  title: "Current zoom",
+                  children: [
+                    zoom.toFixed(1),
+                    "×"
+                  ]
+                }),
+                /* @__PURE__ */ jsx_runtime.jsx("button", {
+                  type: "button",
+                  className: "timeline-zoom-button",
+                  onClick: () => zoomBy(ZOOM_IN),
+                  disabled: zoom >= MAX_ZOOM - 0.01,
+                  title: "Zoom in",
+                  "aria-label": "Zoom in",
+                  children: "+"
+                }),
+                /* @__PURE__ */ jsx_runtime.jsx("button", {
+                  type: "button",
+                  className: "timeline-zoom-button",
+                  onClick: () => zoomBy(ZOOM_OUT),
+                  disabled: !zoomed,
+                  title: "Zoom out",
+                  "aria-label": "Zoom out",
+                  children: "−"
+                }),
+                /* @__PURE__ */ jsx_runtime.jsx("button", {
+                  type: "button",
+                  className: "timeline-zoom-button reset",
+                  onClick: resetZoom,
+                  disabled: !zoomed,
+                  title: "Reset zoom",
+                  children: "Reset"
+                })
               ]
             })
           ]
         }),
         /* @__PURE__ */ jsx_runtime.jsx("div", {
           className: "timeline-body",
+          onPointerDown: handlePointerDown,
+          onPointerMove: handlePointerMove,
+          onPointerUp: endPointer,
+          onPointerCancel: endPointer,
+          onDoubleClick: resetZoom,
           children: snapshot.turns.map((turn) => {
             const turnRows = rows.filter((row) => row.turn === turn.index);
+            const isOffscreen = !turnRows.some((row) => {
+              const start = row.time?.start ?? turn.start;
+              const end = row.time?.end ?? start;
+              return end >= visibleView.start && start <= visibleView.end;
+            });
             return /* @__PURE__ */ jsx_runtime.jsxs("div", {
-              className: "timeline-row",
+              className: `timeline-row${isOffscreen ? " offscreen" : ""}`,
               children: [
                 /* @__PURE__ */ jsx_runtime.jsxs("button", {
                   type: "button",
@@ -14502,7 +14685,7 @@ ${GUEST_UI_LOOK_CSS}`;
                   onClick: () => {
                     const first = turnRows[0];
                     if (first)
-                      onSelect(first);
+                      handleBarClick(first);
                   },
                   title: `Turn ${turn.index}`,
                   children: [
@@ -14512,24 +14695,31 @@ ${GUEST_UI_LOOK_CSS}`;
                 }),
                 /* @__PURE__ */ jsx_runtime.jsx("div", {
                   className: "timeline-track",
+                  ref: turn.index === snapshot.turns[0]?.index ? trackRef : undefined,
                   children: turnRows.map((row) => {
                     const start = row.time?.start ?? turn.start;
-                    const end = row.time?.end ?? start + Math.max(1, domain.span * 0.004);
-                    const left = (start - domain.min) / domain.span * 100;
-                    const width = Math.max(0.45, (Math.max(end, start + 1) - start) / domain.span * 100);
+                    const end = row.time?.end ?? start + Math.max(1, visibleSpan * 0.004);
+                    if (end < visibleView.start || start > visibleView.end)
+                      return null;
+                    const left = (start - visibleView.start) / visibleSpan * 100;
+                    const width = Math.max(0.3, (Math.max(end, start + 1) - start) / visibleSpan * 100);
                     const isSelected = selectedId === row.id;
                     return /* @__PURE__ */ jsx_runtime.jsx("button", {
                       type: "button",
                       className: `timeline-bar ${rowTone(row)}${isSelected ? " selected" : ""}`,
-                      style: { left: `${Math.max(0, Math.min(99.5, left))}%`, width: `${Math.min(100, width)}%` },
+                      style: { left: `${Math.max(0, Math.min(99.7, left))}%`, width: `${Math.min(100, width)}%` },
                       title: barTitle(row),
-                      onClick: () => onSelect(row)
+                      onClick: () => handleBarClick(row)
                     }, row.id);
                   })
                 })
               ]
             }, turn.index);
           })
+        }),
+        /* @__PURE__ */ jsx_runtime.jsx("div", {
+          className: "timeline-hint",
+          children: "Scroll to zoom · drag to pan · double-click to reset"
         })
       ]
     });

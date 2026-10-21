@@ -16,7 +16,7 @@ URL containing it). Approve the `service` capability.
 ## Manifest
 
 - panel id: `trajectory`
-- icon: `route`
+- icon: `pulse`
 - session action: `open-trajectory` (“Open trajectory”)
 - no `page` entry in the current build
 
