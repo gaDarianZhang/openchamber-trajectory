@@ -271,6 +271,8 @@ const TrajectorySurface: React.FC<{
   const [detailError, setDetailError] = React.useState<string | null>(null);
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
   const followingRef = React.useRef(true);
+  const pendingScrollRef = React.useRef(false);
+  const pendingScrollTimerRef = React.useRef<number | null>(null);
   const [following, setFollowing] = React.useState(true);
 
   const items = React.useMemo(
@@ -305,6 +307,13 @@ const TrajectorySurface: React.FC<{
   const onScroll = React.useCallback(() => {
     const element = scrollRef.current;
     if (!element) return;
+    // A programmatic scroll-to-record must not immediately turn tail-follow
+    // back on halfway through its smooth animation.
+    if (pendingScrollRef.current) {
+      followingRef.current = false;
+      setFollowing(false);
+      return;
+    }
     const next = element.scrollHeight - element.scrollTop - element.clientHeight < 140;
     followingRef.current = next;
     setFollowing(next);
@@ -338,6 +347,14 @@ const TrajectorySurface: React.FC<{
     setSelected(row);
     followingRef.current = false;
     setFollowing(false);
+    pendingScrollRef.current = true;
+    if (pendingScrollTimerRef.current !== null) {
+      window.clearTimeout(pendingScrollTimerRef.current);
+    }
+    pendingScrollTimerRef.current = window.setTimeout(() => {
+      pendingScrollRef.current = false;
+      pendingScrollTimerRef.current = null;
+    }, 1400);
     setScrollTarget({ id: row.id, nonce: Date.now() });
   }, []);
 

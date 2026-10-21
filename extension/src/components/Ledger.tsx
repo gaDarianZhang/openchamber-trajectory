@@ -250,13 +250,16 @@ export const Ledger: React.FC<Props> = ({
 
   React.useEffect(() => {
     if (!following) return;
+    // A timeline selection is still being resolved (possibly expanding the
+    // visible window). Do not fight it with a tail jump.
+    if (scrollTarget && handledScrollNonce.current !== scrollTarget.nonce) return;
     const element = scrollRef.current;
     if (!element) return;
     const frame = window.requestAnimationFrame(() => {
       element.scrollTop = element.scrollHeight;
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [following, items.length, snapshot.revision, scrollRef]);
+  }, [following, items.length, snapshot.revision, scrollRef, scrollTarget?.nonce]);
 
   React.useEffect(() => {
     if (!scrollTarget) return;

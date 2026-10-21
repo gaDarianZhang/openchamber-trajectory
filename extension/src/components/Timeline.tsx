@@ -11,7 +11,7 @@ type Props = {
 
 type View = { start: number; end: number };
 
-const MAX_ZOOM = 32;
+const MAX_ZOOM = 128;
 const MIN_SPAN_RATIO = 1 / MAX_ZOOM;
 const ZOOM_IN = 0.8;
 const ZOOM_OUT = 1.25;

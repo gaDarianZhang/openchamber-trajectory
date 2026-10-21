@@ -14418,7 +14418,7 @@ ${GUEST_UI_LOOK_CSS}`;
   // extension/src/components/Timeline.tsx
   var import_react = __toESM(require_react());
   var jsx_runtime = __toESM(require_jsx_runtime());
-  var MAX_ZOOM = 32;
+  var MAX_ZOOM = 128;
   var MIN_SPAN_RATIO = 1 / MAX_ZOOM;
   var ZOOM_IN = 0.8;
   var ZOOM_OUT = 1.25;
@@ -15232,6 +15232,8 @@ ${GUEST_UI_LOOK_CSS}`;
     import_react2.default.useEffect(() => {
       if (!following)
         return;
+      if (scrollTarget && handledScrollNonce.current !== scrollTarget.nonce)
+        return;
       const element = scrollRef.current;
       if (!element)
         return;
@@ -15239,7 +15241,7 @@ ${GUEST_UI_LOOK_CSS}`;
         element.scrollTop = element.scrollHeight;
       });
       return () => window.cancelAnimationFrame(frame);
-    }, [following, items.length, snapshot.revision, scrollRef]);
+    }, [following, items.length, snapshot.revision, scrollRef, scrollTarget?.nonce]);
     import_react2.default.useEffect(() => {
       if (!scrollTarget)
         return;
@@ -16207,6 +16209,8 @@ ${GUEST_UI_LOOK_CSS}`;
     const [detailError, setDetailError] = import_react4.default.useState(null);
     const scrollRef = import_react4.default.useRef(null);
     const followingRef = import_react4.default.useRef(true);
+    const pendingScrollRef = import_react4.default.useRef(false);
+    const pendingScrollTimerRef = import_react4.default.useRef(null);
     const [following, setFollowing] = import_react4.default.useState(true);
     const items = import_react4.default.useMemo(() => snapshot ? buildItems(snapshot, query.trim(), collapsed) : [], [snapshot, query, collapsed]);
     import_react4.default.useEffect(() => {
@@ -16236,6 +16240,11 @@ ${GUEST_UI_LOOK_CSS}`;
       const element = scrollRef.current;
       if (!element)
         return;
+      if (pendingScrollRef.current) {
+        followingRef.current = false;
+        setFollowing(false);
+        return;
+      }
       const next = element.scrollHeight - element.scrollTop - element.clientHeight < 140;
       followingRef.current = next;
       setFollowing(next);
@@ -16267,6 +16276,14 @@ ${GUEST_UI_LOOK_CSS}`;
       setSelected(row);
       followingRef.current = false;
       setFollowing(false);
+      pendingScrollRef.current = true;
+      if (pendingScrollTimerRef.current !== null) {
+        window.clearTimeout(pendingScrollTimerRef.current);
+      }
+      pendingScrollTimerRef.current = window.setTimeout(() => {
+        pendingScrollRef.current = false;
+        pendingScrollTimerRef.current = null;
+      }, 1400);
       setScrollTarget({ id: row.id, nonce: Date.now() });
     }, []);
     const stats = snapshot?.stats;

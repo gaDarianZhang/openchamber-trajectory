@@ -22,7 +22,7 @@ never writes into the project.
 - Compaction, retries, failures, system/synthetic/skill notices
 - Request context: system prompt, tool schemas, options, model, agent
 - Live updates while the session is running
-- A timing overview strip with wheel zoom, drag-to-pan, +/- controls and reset
+- A timing overview strip with wheel zoom (1×–128×), drag-to-pan, +/- controls and reset
 - Click an overview bar to select the record and scroll the ledger to it
   (expanding its turn and clearing a search filter first)
 
