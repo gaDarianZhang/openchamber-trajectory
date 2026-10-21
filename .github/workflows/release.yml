@@ -50,7 +50,13 @@ jobs:
         if: ${{ env.NPM_TOKEN != '' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish ./collector --access public --provenance
+        run: |
+          VERSION=$(node -p "require('./collector/package.json').version")
+          if npm view "openchamber-trajectory-collector@$VERSION" version >/dev/null 2>&1; then
+            echo "openchamber-trajectory-collector@$VERSION is already on npm; skipping"
+          else
+            npm publish ./collector --access public --provenance
+          fi
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2

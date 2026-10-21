@@ -16099,7 +16099,7 @@ ${GUEST_UI_LOOK_CSS}`;
     ]
   });
   var FailurePanel = ({ failure, onRetry, host }) => {
-    const install = failure.install ?? 'git clone https://github.com/gaDarianZhang/openchamber-trajectory.git && mkdir -p .opencode/plugins && ln -s "$PWD/openchamber-trajectory/collector" .opencode/plugins/trajectory-collector';
+    const install = failure.install ?? "opencode plugin add openchamber-trajectory-collector";
     return /* @__PURE__ */ jsx_runtime4.jsxs("div", {
       className: "state-panel",
       children: [

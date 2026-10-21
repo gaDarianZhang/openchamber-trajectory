@@ -272,7 +272,7 @@ async function handle(request, response) {
         ok: false,
         code: "collector_missing",
         message: "The OpenCode trajectory collector is not running for this session.",
-        install: "git clone https://github.com/gaDarianZhang/openchamber-trajectory.git && mkdir -p .opencode/plugins && ln -s \"$PWD/openchamber-trajectory/collector\" .opencode/plugins/trajectory-collector",
+        install: "opencode plugin add openchamber-trajectory-collector",
       });
       return;
     }

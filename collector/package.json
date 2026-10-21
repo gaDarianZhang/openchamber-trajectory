@@ -1,6 +1,6 @@
 {
   "name": "openchamber-trajectory-collector",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Read-only OpenCode 2 trajectory collector for the OpenChamber Trajectory extension",
   "type": "module",
   "main": "index.js",

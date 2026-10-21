@@ -1,6 +1,9 @@
-# @openchamber/opencode-trajectory-collector
+# openchamber-trajectory-collector
 
-Read-only OpenCode 2 plugin that collects the data the OpenChamber Trajectory
+[![npm](https://img.shields.io/npm/v/openchamber-trajectory-collector.svg)](https://www.npmjs.com/package/openchamber-trajectory-collector)
+
+Read-only OpenCode 2 plugin that collects the data the
+[OpenChamber Trajectory](https://github.com/gaDarianZhang/openchamber-trajectory)
 extension renders.
 
 It captures:

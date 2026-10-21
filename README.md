@@ -1,6 +1,7 @@
 # OpenChamber Trajectory
 
 [![CI](https://github.com/gaDarianZhang/openchamber-trajectory/actions/workflows/ci.yml/badge.svg)](https://github.com/gaDarianZhang/openchamber-trajectory/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/openchamber-trajectory-collector.svg)](https://www.npmjs.com/package/openchamber-trajectory-collector)
 
 A Trajectory panel for [OpenChamber](https://openchamber.dev), modelled on the
 DeepSeek Harness trajectory view. It shows what the agent did, step by step:
@@ -46,23 +47,19 @@ Extensions do not load in VS Code or the mobile app.
 
 ### 1. Collector (OpenCode plugin)
 
-Clone the repository and link the collector into the project where you use
-OpenCode:
-
-```bash
-git clone https://github.com/gaDarianZhang/openchamber-trajectory.git
-mkdir -p .opencode/plugins
-ln -s "$PWD/openchamber-trajectory/collector" \
-  .opencode/plugins/trajectory-collector
-```
-
-Or add `./openchamber-trajectory/collector` to the `plugins` array in
-`opencode.json(c)`.
-
-Once the npm package is published, this is shorter:
-
 ```bash
 opencode plugin add openchamber-trajectory-collector
+```
+
+Or add `openchamber-trajectory-collector` to the `plugins` array in
+`opencode.json(c)`.
+
+For a local checkout, link `collector/` instead:
+
+```bash
+mkdir -p .opencode/plugins
+ln -s /absolute/path/to/openchamber-trajectory/collector \
+  .opencode/plugins/trajectory-collector
 ```
 
 ### 2. Extension (OpenChamber)
