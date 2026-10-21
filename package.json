@@ -1,0 +1,24 @@
+{
+  "name": "openchamber-trajectory",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Trajectory view for OpenChamber: OpenCode collector + OpenChamber extension",
+  "scripts": {
+    "build": "bun run scripts/build.mjs",
+    "dev": "bun run scripts/build.mjs --watch",
+    "test": "node --test collector/ledger.test.js",
+    "check": "bun run scripts/build.mjs && node --check collector/index.js && node --check collector/ledger.js && node --check extension/service/main.js && node --test collector/ledger.test.js"
+  },
+  "dependencies": {
+    "@openchamber/sdk": "2.5.0",
+    "@tanstack/react-virtual": "3.14.21",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@openchamber/opencode-trajectory-collector",
+  "version": "0.1.0",
+  "description": "Read-only OpenCode 2 trajectory collector for the OpenChamber Trajectory extension",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./ledger": "./ledger.js"
+  },
+  "files": [
+    "index.js",
+    "ledger.js",
+    "README.md"
+  ],
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "trajectory",
+    "openchamber"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  }
+}
