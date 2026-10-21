@@ -265,6 +265,7 @@ const TrajectorySurface: React.FC<{
   const [query, setQuery] = React.useState("");
   const [collapsed, setCollapsed] = React.useState<Set<number>>(() => new Set());
   const [selected, setSelected] = React.useState<TrajectoryRow | null>(null);
+  const [scrollTarget, setScrollTarget] = React.useState<{ id: string; nonce: number } | null>(null);
   const [detail, setDetail] = React.useState<RowDetail | null>(null);
   const [detailLoading, setDetailLoading] = React.useState(false);
   const [detailError, setDetailError] = React.useState<string | null>(null);
@@ -320,6 +321,24 @@ const TrajectorySurface: React.FC<{
 
   const selectRow = React.useCallback((row: TrajectoryRow) => {
     setSelected(row);
+  }, []);
+
+  const focusFromTimeline = React.useCallback((row: TrajectoryRow) => {
+    // A timeline click may target a row hidden by search or a collapsed turn.
+    // Clear/expand first, then let the ledger scroll to it.
+    setQuery("");
+    if (row.turn !== null) {
+      setCollapsed((current) => {
+        if (!current.has(row.turn as number)) return current;
+        const next = new Set(current);
+        next.delete(row.turn as number);
+        return next;
+      });
+    }
+    setSelected(row);
+    followingRef.current = false;
+    setFollowing(false);
+    setScrollTarget({ id: row.id, nonce: Date.now() });
   }, []);
 
   const stats = snapshot?.stats;
@@ -393,7 +412,7 @@ const TrajectorySurface: React.FC<{
           <Timeline
             snapshot={snapshot}
             selectedId={selected?.id ?? null}
-            onSelect={selectRow}
+            onSelect={focusFromTimeline}
           />
           <div className="workspace">
             <div className="ledger-column">
@@ -404,6 +423,7 @@ const TrajectorySurface: React.FC<{
                 collapsed={collapsed}
                 following={following}
                 scrollRef={scrollRef}
+                scrollTarget={scrollTarget}
                 onScroll={onScroll}
                 onToggleTurn={toggleTurn}
                 onSelect={selectRow}

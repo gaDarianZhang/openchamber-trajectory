@@ -15030,6 +15030,7 @@ ${GUEST_UI_LOOK_CSS}`;
     collapsed,
     following,
     scrollRef,
+    scrollTarget,
     onScroll,
     onToggleTurn,
     onSelect,
@@ -15037,6 +15038,7 @@ ${GUEST_UI_LOOK_CSS}`;
   }) => {
     const [limit, setLimit] = import_react2.default.useState(PAGE_ROWS);
     const visibleItems = items.length > limit ? items.slice(-limit) : items;
+    const handledScrollNonce = import_react2.default.useRef(null);
     import_react2.default.useEffect(() => {
       if (!following)
         return;
@@ -15048,6 +15050,35 @@ ${GUEST_UI_LOOK_CSS}`;
       });
       return () => window.cancelAnimationFrame(frame);
     }, [following, items.length, snapshot.revision, scrollRef]);
+    import_react2.default.useEffect(() => {
+      if (!scrollTarget)
+        return;
+      if (handledScrollNonce.current === scrollTarget.nonce)
+        return;
+      const index = items.findIndex((item) => item.type === "row" && item.row.id === scrollTarget.id);
+      if (index < 0)
+        return;
+      const needed = items.length - index;
+      if (needed > limit) {
+        setLimit(Math.min(items.length, needed + 12));
+        return;
+      }
+      const frame = window.requestAnimationFrame(() => {
+        const container = scrollRef.current;
+        if (!container)
+          return;
+        const element = Array.from(container.querySelectorAll("[data-row-id]")).find((candidate) => candidate.dataset.rowId === scrollTarget.id);
+        if (!element)
+          return;
+        handledScrollNonce.current = scrollTarget.nonce;
+        const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+        const containerRect = container.getBoundingClientRect();
+        const elementRect = element.getBoundingClientRect();
+        const top = Math.max(0, container.scrollTop + (elementRect.top - containerRect.top) - container.clientHeight / 2 + elementRect.height / 2);
+        container.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
+      });
+      return () => window.cancelAnimationFrame(frame);
+    }, [scrollTarget, items, limit, scrollRef]);
     const renderItem = (item) => {
       if (item.type === "turn") {
         return /* @__PURE__ */ jsx_runtime2.jsx(TurnHeader, {
@@ -15095,6 +15126,7 @@ ${GUEST_UI_LOOK_CSS}`;
               className: "ledger-inner",
               children: visibleItems.map((item, index) => /* @__PURE__ */ jsx_runtime2.jsx("div", {
                 className: "ledger-item",
+                "data-row-id": item.type === "row" ? item.row.id : undefined,
                 children: renderItem(item)
               }, item.type === "row" ? item.row.id : item.type === "turn" ? `turn:${item.turn.index}` : `between:${index}`))
             })
@@ -15979,6 +16011,7 @@ ${GUEST_UI_LOOK_CSS}`;
     const [query, setQuery] = import_react4.default.useState("");
     const [collapsed, setCollapsed] = import_react4.default.useState(() => new Set);
     const [selected, setSelected] = import_react4.default.useState(null);
+    const [scrollTarget, setScrollTarget] = import_react4.default.useState(null);
     const [detail, setDetail] = import_react4.default.useState(null);
     const [detailLoading, setDetailLoading] = import_react4.default.useState(false);
     const [detailError, setDetailError] = import_react4.default.useState(null);
@@ -16029,6 +16062,22 @@ ${GUEST_UI_LOOK_CSS}`;
     }, []);
     const selectRow = import_react4.default.useCallback((row) => {
       setSelected(row);
+    }, []);
+    const focusFromTimeline = import_react4.default.useCallback((row) => {
+      setQuery("");
+      if (row.turn !== null) {
+        setCollapsed((current) => {
+          if (!current.has(row.turn))
+            return current;
+          const next = new Set(current);
+          next.delete(row.turn);
+          return next;
+        });
+      }
+      setSelected(row);
+      followingRef.current = false;
+      setFollowing(false);
+      setScrollTarget({ id: row.id, nonce: Date.now() });
     }, []);
     const stats = snapshot?.stats;
     const status = snapshot ? snapshot.turns.some((turn) => turn.status === "running") ? "running" : "idle" : "idle";
@@ -16166,7 +16215,7 @@ ${GUEST_UI_LOOK_CSS}`;
             /* @__PURE__ */ jsx_runtime4.jsx(Timeline, {
               snapshot,
               selectedId: selected?.id ?? null,
-              onSelect: selectRow
+              onSelect: focusFromTimeline
             }),
             /* @__PURE__ */ jsx_runtime4.jsxs("div", {
               className: "workspace",
@@ -16180,6 +16229,7 @@ ${GUEST_UI_LOOK_CSS}`;
                     collapsed,
                     following,
                     scrollRef,
+                    scrollTarget,
                     onScroll,
                     onToggleTurn: toggleTurn,
                     onSelect: selectRow,

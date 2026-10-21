@@ -1,6 +1,6 @@
 {
   "name": "openchamber-trajectory",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Trajectory panel for OpenChamber, powered by an OpenCode collector plugin",
   "license": "MIT",
   "openchamber": {

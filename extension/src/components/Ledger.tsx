@@ -33,6 +33,7 @@ type Props = {
   collapsed: Set<number>;
   following: boolean;
   scrollRef: React.RefObject<HTMLDivElement | null>;
+  scrollTarget: { id: string; nonce: number } | null;
   onScroll: () => void;
   onToggleTurn: (index: number) => void;
   onSelect: (row: TrajectoryRow) => void;
@@ -237,6 +238,7 @@ export const Ledger: React.FC<Props> = ({
   collapsed,
   following,
   scrollRef,
+  scrollTarget,
   onScroll,
   onToggleTurn,
   onSelect,
@@ -244,6 +246,7 @@ export const Ledger: React.FC<Props> = ({
 }) => {
   const [limit, setLimit] = React.useState(PAGE_ROWS);
   const visibleItems = items.length > limit ? items.slice(-limit) : items;
+  const handledScrollNonce = React.useRef<number | null>(null);
 
   React.useEffect(() => {
     if (!following) return;
@@ -254,6 +257,41 @@ export const Ledger: React.FC<Props> = ({
     });
     return () => window.cancelAnimationFrame(frame);
   }, [following, items.length, snapshot.revision, scrollRef]);
+
+  React.useEffect(() => {
+    if (!scrollTarget) return;
+    if (handledScrollNonce.current === scrollTarget.nonce) return;
+
+    const index = items.findIndex((item) => item.type === "row" && item.row.id === scrollTarget.id);
+    if (index < 0) return;
+
+    const needed = items.length - index;
+    if (needed > limit) {
+      setLimit(Math.min(items.length, needed + 12));
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const container = scrollRef.current;
+      if (!container) return;
+      const element = Array.from(container.querySelectorAll<HTMLElement>("[data-row-id]"))
+        .find((candidate) => candidate.dataset.rowId === scrollTarget.id);
+      if (!element) return;
+      handledScrollNonce.current = scrollTarget.nonce;
+      const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+      const containerRect = container.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
+      const top = Math.max(
+        0,
+        container.scrollTop
+          + (elementRect.top - containerRect.top)
+          - container.clientHeight / 2
+          + elementRect.height / 2,
+      );
+      container.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [scrollTarget, items, limit, scrollRef]);
 
   const renderItem = (item: LedgerItem) => {
     if (item.type === "turn") {
@@ -296,6 +334,7 @@ export const Ledger: React.FC<Props> = ({
             {visibleItems.map((item, index) => (
               <div
                 className="ledger-item"
+                data-row-id={item.type === "row" ? item.row.id : undefined}
                 key={item.type === "row" ? item.row.id : item.type === "turn" ? `turn:${item.turn.index}` : `between:${index}`}
               >
                 {renderItem(item)}
